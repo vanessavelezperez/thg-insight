@@ -1,0 +1,86 @@
+{
+    "RandomForest": {
+        "best_score": 0.7748803827751196,
+        "best_params": {
+            "class_weight": "balanced",
+            "max_depth": 35,
+            "max_features": 0.3,
+            "n_estimators": 508
+        },
+        "model_params": {
+            "bootstrap": true,
+            "ccp_alpha": 0.0,
+            "class_weight": "balanced",
+            "criterion": "gini",
+            "max_depth": 35,
+            "max_features": 0.3,
+            "max_leaf_nodes": null,
+            "max_samples": null,
+            "min_impurity_decrease": 0.0,
+            "min_samples_leaf": 1,
+            "min_samples_split": 2,
+            "min_weight_fraction_leaf": 0.0,
+            "monotonic_cst": null,
+            "n_estimators": 508,
+            "n_jobs": -1,
+            "oob_score": false,
+            "random_state": 42,
+            "verbose": 0,
+            "warm_start": false
+        },
+        "model_type": "RandomForestClassifier"
+    },
+    "LogisticL1": {
+        "best_score": 0.7013822434875066,
+        "best_params": {
+            "C": 100,
+            "class_weight": null,
+            "solver": "saga"
+        },
+        "model_params": {
+            "C": 100,
+            "class_weight": null,
+            "dual": false,
+            "fit_intercept": true,
+            "intercept_scaling": 1,
+            "l1_ratio": null,
+            "max_iter": 4000,
+            "multi_class": "deprecated",
+            "n_jobs": null,
+            "penalty": "l1",
+            "random_state": 42,
+            "solver": "saga",
+            "tol": 0.0001,
+            "verbose": 0,
+            "warm_start": false
+        },
+        "model_type": "LogisticRegression"
+    },
+    "LogisticElasticNet": {
+        "best_score": 0.7066454013822435,
+        "best_params": {
+            "C": 0.5,
+            "class_weight": null,
+            "l1_ratio": 0.5,
+            "solver": "saga"
+        },
+        "model_params": {
+            "C": 0.5,
+            "class_weight": null,
+            "dual": false,
+            "fit_intercept": true,
+            "intercept_scaling": 1,
+            "l1_ratio": 0.5,
+            "max_iter": 4000,
+            "multi_class": "deprecated",
+            "n_jobs": null,
+            "penalty": "elasticnet",
+            "random_state": 42,
+            "solver": "saga",
+            "tol": 0.0001,
+            "verbose": 0,
+            "warm_start": false
+        },
+        "model_type": "LogisticRegression"
+    }
+}
