@@ -178,44 +178,29 @@ def run_univariate_tests(feature_series, labels, control_group=None):
 
     return results, fig, explanations
 
-def confidence_ellipse(x, y, ax, n_std=3.0, **kwargs):
-    """
-    Create a plot of the covariance confidence ellipse of *x* and *y*.
-
-    Parameters
-    ----------
-    x, y : array-like, shape (n, )
-        Input data.
-
-    ax : matplotlib.axes.Axes
-        The Axes object to draw the ellipse into.
-
-    n_std : float
-        The number of standard deviations to determine the ellipse's radiuses.
-
-    **kwargs
-        Forwarded to `~matplotlib.patches.Ellipse`
-
-    Returns
-    -------
-    matplotlib.patches.Ellipse
-    """
-    if x.size != y.size:
-        raise ValueError("x and y must be the same size")
+def get_ellipse(x, y, n_std=2.0):
+    if len(x) < 2:
+        return [], []
 
     cov = np.cov(x, y)
-    pearson = cov[0, 1]/np.sqrt(cov[0, 0] * cov[1, 1])
-    # Using a special case to obtain the eigenvalues of this
-    # two-dimensional dataset.
-    ell_radius_x = np.sqrt(1 + pearson)
-    ell_radius_y = np.sqrt(1 - pearson)
-
-    # Calculating the standard deviation of x from
-    # the squareroot of the variance and multiplying
-    # with the given number of standard deviations.
-    scale_x = np.sqrt(cov[0, 0]) * n_std
     mean_x = np.mean(x)
-
-    # calculating the standard deviation of y ...
-    scale_y = np.sqrt(cov[1, 1]) * n_std
     mean_y = np.mean(y)
+
+    eigenvals, eigenvecs = np.linalg.eigh(cov)
+    order = eigenvals.argsort()[::-1]
+    eigenvals, eigenvecs = eigenvals[order], eigenvecs[:, order]
+
+    # Calculate the angle between the x-axis and the largest eigenvector
+    angle = np.arctan2(*eigenvecs[:, 0][::-1])
+
+    # Chi-squared value for 95% confidence
+    chisq_val = np.sqrt(stats.chi2.ppf(0.95, df=2))
+
+    width, height = 2 * n_std * chisq_val * np.sqrt(eigenvals)
+    theta = np.linspace(0, 2 * np.pi, 100)
+    ellipse = np.array([width / 2 * np.cos(theta), height / 2 * np.sin(theta)])
+    R = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
+    ellipse_rot = R @ ellipse
+    ellipse_x, ellipse_y = ellipse_rot[0] + mean_x, ellipse_rot[1] + mean_y
+
+    return ellipse_x, ellipse_y

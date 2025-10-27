@@ -1,5 +1,6 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 import networkx as nx
 from pyvis.network import Network
@@ -7,6 +8,7 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 import plotly.figure_factory as ff
 from streamlit_plotly_events import plotly_events
+from analysis import get_ellipse
 
 # --- Standard categorical color palette ---
 categorical_colors = px.colors.qualitative.Set1  # visually distinct colors
@@ -33,6 +35,30 @@ def plot_scatter(df, components, metadata_cols, method="PCA", explained_var=None
         hover_data=metadata_cols,
         color_discrete_sequence=categorical_colors
     )
+    # --- Add confidence ellipses ---
+    color_map={}
+    if colour_by:
+        unique_groups=df_plot[colour_by].unique()
+        for i,group in enumerate(unique_groups):
+            color_map[group] = categorical_colors[i % len(categorical_colors)]
+        
+        for group in df_plot[colour_by].unique():
+            subset = df_plot[df_plot[colour_by] == group]
+            x = subset[x_axis].values
+            y = subset[y_axis].values
+            ellipse_x, ellipse_y = get_ellipse(x, y)
+           
+            fig.add_trace(go.Scatter(
+                x=ellipse_x,
+                y=ellipse_y,
+                mode='none',
+                fill='toself',
+                name=f"{group} CI",
+                fillcolor=color_map[group],
+                opacity=0.1,
+                showlegend=False,
+                hoverinfo='skip'
+            ))
 
     # --- Capture selection with lasso/box ---
     selected_points = plotly_events(
