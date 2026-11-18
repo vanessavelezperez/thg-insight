@@ -39,6 +39,3 @@ data/
 
 *.zip
 *.ipynb
-
-*.yaml
-*.yml
