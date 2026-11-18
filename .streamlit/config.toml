@@ -1,0 +1,3 @@
+[server]
+# Max upload size in MB (Streamlit default is 200)
+maxUploadSize = 10000
