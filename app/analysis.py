@@ -416,20 +416,31 @@ def compute_correlation_matrix(df, compound_cols, method):
 
 @st.cache_data
 def calculate_cv_by_group(df, compound_cols, group_col):
-    results = []
-    for compound in compound_cols:
-        for group_name, group_data in df.groupby(group_col):
-            values = group_data[compound].dropna()
-            if len(values) > 1:
-                mean_val = values.mean()
-                std_val = values.std()
-                cv_val = 100 * std_val / mean_val if mean_val != 0 else np.nan
-                results.append({
-                    'Compound': compound, group_col: group_name, 'N': len(values),
-                    'Mean': mean_val, 'Std': std_val, 'CV %': cv_val,
-                    'Min': values.min(), 'Max': values.max()
-                })
-    return pd.DataFrame(results)
+    """
+    Per-(compound, group) N, mean, SD, CV %, min, max — computed in one vectorised groupby.
+    Cleaning (on a local subset only — df is not modified):
+      1. drop groups with only one row
+      2. drop groups whose rows are all 0/NaN across every compound in compound_cols
+    All-zero (compound, group) pairs get CV 0% — the samples agree.
+    """
+    cols = list(compound_cols)
+    sub = df[[group_col] + cols]
+
+    sub = sub[sub.groupby(group_col)[group_col].transform('size') > 1]
+    row_empty = (sub[cols].fillna(0) == 0).all(axis=1)
+    sub = sub[~row_empty.groupby(sub[group_col]).transform('all')]
+
+    g = sub.groupby(group_col)[cols]
+    stats = {'N': g.count(), 'Mean': g.mean(), 'Std': g.std(), 'Min': g.min(), 'Max': g.max()}
+
+    # Each frame is (group × compound); unstack → Series indexed (compound, group), compound-major
+    out = pd.DataFrame({name: frame.unstack() for name, frame in stats.items()})
+    out.index.names = ['Compound', group_col]
+    out = out[out['N'] > 1].reset_index()
+
+    out['CV %'] = 100 * out['Std'] / out['Mean'].where(out['Mean'] != 0)
+    out.loc[(out['Mean'] == 0) & (out['Std'] == 0), 'CV %'] = 0.0
+    return out[['Compound', group_col, 'N', 'Mean', 'Std', 'CV %', 'Min', 'Max']]
 
 
 # ── New analysis functions ────────────────────────────────────────────────────

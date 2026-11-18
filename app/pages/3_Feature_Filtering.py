@@ -194,14 +194,13 @@ elif section == "D-ratio":
         )
 
         rsd_by_group_thresh = st.slider(f"Flag {group_for_d} with mean RSD above (%)", 0, 200, 30, 5)
-
         if not good_compounds:
             st.warning("No compounds pass the D-ratio/RSD thresholds above — nothing to check.")
         else:
             cv_long = calculate_cv_by_group(df_filtered, good_compounds, group_for_d)
 
             if cv_long.empty:
-                st.warning(f"No {group_for_d} has ≥2 samples — RSD cannot be computed.")
+                st.warning(f"No {group_for_d} has ≥2 non-empty samples — RSD cannot be computed.")
             else:
                 group_rsd = cv_long.groupby(group_for_d)['CV %'].agg(
                     mean_rsd='mean', n_compounds='count'
@@ -218,15 +217,36 @@ elif section == "D-ratio":
                 if n_flagged > 0:
                     st.warning(
                         f"{n_flagged} {group_for_d}(s) show mean RSD above {rsd_by_group_thresh}% "
-                        f"across the {len(good_compounds)} good-quality compounds."
+                        f"across the {cv_long['Compound'].nunique()} good-quality compounds."
                     )
+
+                rsd = group_rsd['mean_rsd']
+                for col, (label, val) in zip(st.columns(5), [
+                    ("Mean RSD", rsd.mean()), ("Median RSD", rsd.median()),
+                    ("Q1", rsd.quantile(0.25)), ("Q3", rsd.quantile(0.75)), ("Max", rsd.max()),
+                ]):
+                    col.metric(label, f"{val:.1f}%")
+
+                fig_rsd_hist = px.histogram(
+                    group_rsd, x='mean_rsd', nbins=30,
+                    color_discrete_sequence=['#1f77b4'],
+                    labels={'mean_rsd': 'Mean RSD (%)'},
+                    title=f"Distribution of mean RSD across {group_for_d}",
+                )
+                fig_rsd_hist.update_layout(bargap=0.05, height=300, yaxis_title=f"# {group_for_d}")
+                fig_rsd_hist.add_vline(x=rsd.median(), line_color='black',
+                                       annotation_text=f"median {rsd.median():.1f}%")
+                fig_rsd_hist.add_vline(x=rsd_by_group_thresh, line_dash='dash', line_color='gray',
+                                       annotation_text=f"{rsd_by_group_thresh}%",
+                                       annotation_position='bottom right')
+                st.plotly_chart(fig_rsd_hist, use_container_width=True)
 
                 fig_group_rsd = px.bar(
                     group_rsd.sort_values('mean_rsd', ascending=False),
                     x=group_for_d, y='mean_rsd', color='flagged',
                     color_discrete_map={True: '#d62728', False: '#1f77b4'},
                     labels={'mean_rsd': 'Mean RSD (%)'},
-                    title=f"RSD by {group_for_d} across {len(good_compounds)} good-quality compounds"
+                    title=f"RSD by {group_for_d} across {cv_long['Compound'].nunique()} good-quality compounds"
                 )
                 fig_group_rsd.add_hline(y=rsd_by_group_thresh, line_dash='dash', line_color='gray',
                                         annotation_text=f'{rsd_by_group_thresh}%')
