@@ -8,14 +8,14 @@ st.title("VOC Analytics Dashboard")
 # ── Data upload ───────────────────────────────────────────────────────────────
 st.header("1. Upload Data")
 
-uploaded_file = st.file_uploader("Upload your data file", type=["xlsx", "xls", "csv"])
+uploaded_file = st.file_uploader("Upload your data file", type=["xlsx", "csv"])
 
 if not uploaded_file:
     st.session_state['df'] = None
     st.info("Please upload an Excel or CSV file to begin.")
     st.stop()
 
-if uploaded_file.name.endswith((".xlsx", ".xls")):
+if uploaded_file.name.endswith(".xlsx"):
     xls = pd.ExcelFile(uploaded_file, engine="openpyxl")
     sheet_name = st.selectbox("Select worksheet", xls.sheet_names)
     df = load_data(uploaded_file, sheet_name, type='excel')
@@ -41,9 +41,9 @@ use_meta_file = st.checkbox("Import metadata from a separate file?", key="use_me
 
 merged_meta_cols = []
 if use_meta_file:
-    meta_file = st.file_uploader("Upload metadata file", type=["xlsx", "xls", "csv"], key="meta_uploader")
+    meta_file = st.file_uploader("Upload metadata file", type=["xlsx", "csv"], key="meta_uploader")
     if meta_file:
-        if meta_file.name.endswith((".xlsx", ".xls")):
+        if meta_file.name.endswith(".xlsx"):
             meta_xls = pd.ExcelFile(meta_file, engine="openpyxl")
             meta_sheet = st.selectbox("Select metadata worksheet", meta_xls.sheet_names, key="meta_sheet")
             meta_df = load_data(meta_file, meta_sheet, type='excel')
